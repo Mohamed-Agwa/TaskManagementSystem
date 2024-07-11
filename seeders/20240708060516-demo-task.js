@@ -20,6 +20,24 @@ module.exports = {
         assigneeId: 3,
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        title: 'Task 2',
+        description: 'Second task',
+        status: 'completed',
+        dueDate: new Date(),
+        assigneeId: 2,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        title: 'Task 2',
+        description: 'Second task',
+        status: 'completed',
+        dueDate: new Date(),
+        assigneeId: 3,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ], {});
   },
