@@ -11,7 +11,7 @@ app.use('/users', require('./routes/userRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ alter : true }).then(() => {
         app.listen(PORT, () => {
           console.log(`Server is running on port ${PORT}`);
         });

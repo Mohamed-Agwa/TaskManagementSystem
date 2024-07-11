@@ -39,7 +39,10 @@ const getAllTasks = async (req, res) => {
   if(assigneeid && isNaN(assigneeid)){
     return res.status(400).json({ error: 'Please enter a valid ID' });
 
-  }else{
+  }else if (assigneeid){
+    if (req.user.role !== 'Manager') {
+          return res.status(403).json({ error: 'Only managers can view others tasks , please remove the assigneeid' });
+        }
     const userr = await Task.findOne({ where: { assigneeId : assigneeid } });
     if (!userr) {
       return res.status(400).json({ error: 'Please enter a valid ID' });
@@ -128,6 +131,18 @@ else if (req.user.role == "Manager" && status && !assigneeid && !startDate) {
     { model: Task, as: 'Dependencies' },
     { model: Task, as: 'DependedOnBy' }
   ] });
+}else if (req.user.role == "Manager" && !status && assigneeid && startDate) {
+  tasks = await Task.findAll({where: {
+    assigneeId : assigneeid,
+    dueDate : {[Op.between]: [new Date(startDate), new Date(endDate)]},
+  }, include: [
+    {
+      model: User,
+      as: 'assignee',
+    },
+    { model: Task, as: 'Dependencies' },
+    { model: Task, as: 'DependedOnBy' }
+  ] });
 }else if(req.user.role == "Manager" && !status && !assigneeid && startDate){
   tasks = await Task.findAll({where: {
     dueDate : {[Op.between]: [new Date(startDate), new Date(endDate)]},
@@ -155,23 +170,51 @@ else if (req.user.role == "Manager" && status && !assigneeid && !startDate) {
 }else if (req.user.role == "User" && !status && !startDate ){
   tasks = await Task.findAll({where: {
       assigneeId: req.user.id,
-    }, include: 'assignee' });
+    }, include: [
+    {
+      model: User,
+      as: 'assignee',
+    },
+    { model: Task, as: 'Dependencies' },
+    { model: Task, as: 'DependedOnBy' }
+  ] });
 }else if (req.user.role == "User" && status && !startDate ){
   tasks = await Task.findAll({where: {
       assigneeId: req.user.id,
       status: status,
-    }, include: 'assignee' });
+    }, include: [
+    {
+      model: User,
+      as: 'assignee',
+    },
+    { model: Task, as: 'Dependencies' },
+    { model: Task, as: 'DependedOnBy' }
+  ] });
 }else if (req.user.role == "User" && !status && startDate ){
   tasks = await Task.findAll({where: {
       assigneeId: req.user.id,
       dueDate : {[Op.between]: [new Date(startDate), new Date(endDate)]},
-    }, include: 'assignee' });
+    }, include: [
+    {
+      model: User,
+      as: 'assignee',
+    },
+    { model: Task, as: 'Dependencies' },
+    { model: Task, as: 'DependedOnBy' }
+  ] });
 }else if (req.user.role == "User" && status && startDate ){
   tasks = await Task.findAll({where: {
       assigneeId: req.user.id,
       status: status,
       dueDate : {[Op.between]: [new Date(startDate), new Date(endDate)]},
-    }, include: 'assignee' });
+    }, include: [
+    {
+      model: User,
+      as: 'assignee',
+    },
+    { model: Task, as: 'Dependencies' },
+    { model: Task, as: 'DependedOnBy' }
+  ] });
 }
 
 if(tasks.length == 0 ){
@@ -184,6 +227,7 @@ if(tasks.length == 0 ){
 const getTaskDetails = async (req, res) => {
   const { id } = req.params;
   console.log(id);
+
   try {
     const task = await Task.findByPk(id, {
       include: [
@@ -197,6 +241,8 @@ const getTaskDetails = async (req, res) => {
     });
     if (!task) {
       return res.status(404).json({ error: 'No task found with the specified ID' });
+    }else if (req.user.role !== 'Manager' && (req.user.id != task.assigneeId)) {
+      return res.status(403).json({ error: 'Only managers can view others tasks , please enter a task you are already assinged' });
     }
     res.status(200).json(task);
   } catch (error) {
@@ -211,7 +257,7 @@ const updateTask = async (req, res) => {
   }
 
   if (req.user.role !== 'Manager' && req.user.id !== task.assigneeId) {
-    return res.status(403).send('Permission Denied');
+    return res.status(403).json({ error: 'You are only allowed to update your tasks' });
   }
 
   const { title, description, dueDate, status , assigneeId, dependencies } = req.body;
@@ -222,7 +268,7 @@ const updateTask = async (req, res) => {
   if(assigneeId && isNaN(assigneeId)){
     return res.status(400).json({ error: 'Please enter a valid ID' });
 
-  }else{
+  }else if (assigneeId){
     const userr = await Task.findOne({ where: { assigneeId : assigneeId } });
     if (!userr) {
       return res.status(400).json({ error: 'Please enter a valid ID' });
@@ -289,6 +335,7 @@ const updateTask = async (req, res) => {
     task.status = status;
   }
   await task.save();
+  
   res.send(task);
 };
 

@@ -13,7 +13,7 @@ const login = async (req, res) => {
 
   const user = await User.findOne({ where: { username } });
   if (!user || !user.validPassword(password)) {
-    return res.status(400).send('Invalid Credentials');
+    return res.status(400).json({ error: 'Username or password incorrect' });
   }
 
   const token = jwt.sign({ id: user.id , role: user.role}, process.env.JWT_SECRET, { expiresIn: '1h' });
